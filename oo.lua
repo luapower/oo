@@ -1,4 +1,4 @@
---object system with virtual properties and virtual method hooks (Cosmin Apreutesei, public domain)
+--object system with virtual properties and method overriding hooks (Cosmin Apreutesei, public domain)
 local glue = require'glue'
 
 --[[ TODO: find a nice way to provide a classname on the same line
