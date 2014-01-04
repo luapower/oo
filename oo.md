@@ -1,6 +1,7 @@
 ---
-project: oo
-tagline: object system with virtual properties and method overriding hooks
+project:     oo
+tagline:     object system with virtual properties and method overriding hooks
+category:    Language
 ---
 
 v1.0 | Lua 5.1, Lua 5.2, LuaJIT 2
