@@ -1,7 +1,6 @@
 ---
 project:     oo
 tagline:     object system with virtual properties and method overriding hooks
-category:    Language
 ---
 
 ## `local oo = require'oo'`
