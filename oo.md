@@ -1,9 +1,11 @@
 ---
-project:     oo
-tagline:     object system with virtual properties and method overriding hooks
+project: oo
+tagline: object system
 ---
 
 ## `local oo = require'oo'`
+
+An object system with virtual properties and method overriding hooks.
 
 ## Features
 
