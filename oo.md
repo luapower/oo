@@ -1,11 +1,11 @@
 ---
 project: oo
-tagline: object system
+tagline: object system with virtual properties
 ---
 
 ## `local oo = require'oo'`
 
-An object system with virtual properties and method overriding hooks.
+Object system with virtual properties and method overriding hooks.
 
 ## Features
 
@@ -34,14 +34,17 @@ An object system with virtual properties and method overriding hooks.
 
 ## In detail
 
-**Classes are created** with `oo.class([super])`, where `super` is usually another class, but can also be an instance, which is useful for creating polymorphic "views" on existing instances.
+**Classes are created** with `oo.class([super])`, where `super` is usually another class, but can also be an instance,
+which is useful for creating polymorphic "views" on existing instances.
 
 ~~~{.lua}
 local cls = oo.class()
 cls.classname = 'cls'
 ~~~
 
-**Instances are created** with `myclass:create(...)` or simply `myclass()`, which in turn calls `myclass:init(...)` which is the object constructor. While `myclass` is normally a class, it can also be an instance, which effectively enables prototype-based inheritance.
+**Instances are created** with `myclass:create(...)` or simply `myclass()`, which in turn calls `myclass:init(...)`
+which is the object constructor. While `myclass` is normally a class, it can also be an instance, which effectively
+enables prototype-based inheritance.
 
 ~~~{.lua}
 local obj = cls()
