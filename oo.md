@@ -7,7 +7,7 @@ tagline: object system with virtual properties
 
 Object system with virtual properties and method overriding hooks.
 
-## Features
+## In a nutshell
 
  * single, dynamic inheritance by default:
    * `fruit = oo.class()`
@@ -37,8 +37,6 @@ Object system with virtual properties and method overriding hooks.
    * `oo.class(fruit) -> apple` is sugar for `fruit:subclass() -> apple`
    * `apple(...) -> a` is sugar for `apple:create(...) -> a`
       * `apple:create()` calls `a:init(...)`
-
- * 160 LOC without introspection
 
 ## Inheritance and instantiation
 
