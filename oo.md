@@ -10,29 +10,32 @@ Object system with virtual properties and method overriding hooks.
 ## Features
 
  * single, dynamic inheritance by default:
-   * `oo.class([superclass]) -> class`
-   * `class() -> instance`
-   * `instance.super -> class`
-   * `class.super -> superclass`
- * static, multiple inheritance by request:
-   * `self:inherit(other[,override])` - statically inherit properties of `other`, optionally overriding existing properties.
+   * `fruit = oo.class()`
+   * `apple = oo.class(fruit)`
+   * `a = apple(...)`
+		* calls `apple:create(...) -> a`
+			* calls `a:init(...)`
+   * `a.super -> apple`
+   * `apple.super -> fruit`
+ * multiple, static inheritance by request:
+   * `self:inherit(baz[,override])` - statically inherit properties of `baz`, optionally overriding existing properties.
    * `self:detatch()` - detach from the parent class, in other words statically inherit `self.super`.
  * virtual properties with getter and setter:
-   * reading `self.foo` calls `self:get_foo()` to get the value.
+   * reading `self.foo` calls `self:get_foo()` to get the value, if `self.get_foo` exists.
    * assignment to `self.foo` calls `self:set_foo(value)`.
-   * missing the setter, the property is read-only and assignment fails.
+   * missing the setter, the property is considered read-only and the assignment fails.
  * stored properties (no getter):
    * assignment to `self.foo` calls `self:set_foo(value)` and sets `self.state.foo`.
    * reading `self.foo` reads back `self.state.foo`.
  * before/after method hooks:
-   * `self:before_m()` installs a before-hook for `self:m()`.
-   * `self:after_m()` installs an after-hook for `self:m()`.
+   * `self:before_baz()` installs a before-hook for method `self:baz()`.
+   * `self:after_baz()` installs an after-hook for method `self:baz()`.
  * introspection:
    * `self:allpairs() -> iterator() -> name, value, source` - iterate all properties, including inherited _and overriden_ ones.
    * `self:properties()` -> get a table of all current properties and values, including inherited ones.
    * `self:inspect()` - inspect the class/instance structure and contents in detail.
 
-## In detail
+## Inheritance and instantiation
 
 **Classes are created** with `oo.class([super])`, where `super` is usually another class, but can also be an instance,
 which is useful for creating polymorphic "views" on existing instances.
@@ -57,8 +60,8 @@ assert(obj.super == cls)
 assert(cls.super == oo.object)
 ~~~
 
-**Inheritance is dynamic**: properties are looked up at runtime in `self.super` and changing the superclass
-reflects on all subclasses and instances. This can be slow, but it saves space.
+**Inheritance is dynamic**: properties are looked up at runtime in `self.super` and changing a property or method
+in the superclass reflects on all subclasses and instances. This can be slow, but it saves space.
 
 ~~~{.lua}
 cls.the_answer = 42
@@ -116,6 +119,8 @@ obj.answer_to_life = 42
 assert(obj.answer_to_life == 42) --assuming deep_thought can store a number
 ~~~
 
+## Virtual properties
+
 **Stored properties** are virtual properties with a setter but no getter. The values of those properties are stored
 in the table `self.state` upon assignment of the property and read back upon indexing the property.
 If the setter breaks, the value is not stored.
@@ -132,11 +137,14 @@ Virtual and inherited properties are all read by calling `self:getproperty(name)
 are written to with `self:setproperty(name, value)`. You can override these methods for *finer control* over the
 behavior of virtual and inherited properties.
 
-Virtual properties can be *generated in bulk* given a getter and a setter and a list of names by calling
-`self:gen_properties(names, getter, setter)`. The setter and getter must be methods of form:
+Virtual properties can be *generated in bulk* given a _multikey_ getter and a _multikey_ setter
+and a list of property names, by calling `self:gen_properties(names, getter, setter)`.
+The setter and getter must be methods of form:
 
   * `self:getter(k) -> v`
   * `self:setter(k, v)`
+
+## Method hooks
 
 **Before/after hooks** are sugar for overriding methods. Overriding a method can be done by simply redefining
 it and calling `class.super.<method>(self,...)` inside the new implementation. Most of the time this call
