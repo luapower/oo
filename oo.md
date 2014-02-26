@@ -13,8 +13,6 @@ Object system with virtual properties and method overriding hooks.
    * `fruit = oo.class()`
    * `apple = oo.class(fruit)`
    * `a = apple(...)`
-		* calls `apple:create(...) -> a`
-			* calls `a:init(...)`
    * `a.super -> apple`
    * `apple.super -> fruit`
  * multiple, static inheritance by request:
@@ -34,6 +32,13 @@ Object system with virtual properties and method overriding hooks.
    * `self:allpairs() -> iterator() -> name, value, source` - iterate all properties, including inherited _and overriden_ ones.
    * `self:properties()` -> get a table of all current properties and values, including inherited ones.
    * `self:inspect()` - inspect the class/instance structure and contents in detail.
+ * overridable subclassing and instantiation mechanisms:
+   * `oo.class() -> fruit` is sugar for `oo.object:subclass() -> fruit`
+   * `oo.class(fruit) -> apple` is sugar for `fruit:subclass() -> apple`
+   * `apple(...) -> a` is sugar for `apple:create(...) -> a`
+      * `apple:create()` calls `a:init(...)`
+
+ * 160 LOC without introspection
 
 ## Inheritance and instantiation
 
