@@ -1,5 +1,4 @@
 --object system with virtual properties and method overriding hooks (Cosmin Apreutesei, public domain)
-local glue = require'glue'
 
 --[[ TODO: find a nice way to provide a classname on the same line
 local Window = oo.class.Window(BaseWindow)
@@ -42,22 +41,24 @@ function meta.__newindex(o,k,v)
 	o:setproperty(k,v)
 end
 
+local function noop() end
+
 function object:beforehook(method_name, hook)
-	local method = self[method_name] or glue.pass
+	local method = self[method_name] or noop
 	rawset(self, method_name, function(self, ...)
 		return method(self, hook(self, ...))
 	end)
 end
 
 function object:afterhook(method_name, hook)
-	local method = self[method_name] or glue.pass
+	local method = self[method_name] or noop
 	rawset(self, method_name, function(self, ...)
 		return hook(method(self, ...))
 	end)
 end
 
 function object:overridehook(method_name, hook)
-	local method = self[method_name] or glue.pass
+	local method = self[method_name] or noop
 	rawset(self, method_name, function(self, ...)
 		return hook(self, method, ...)
 	end)
@@ -174,6 +175,7 @@ local function pad(s, n) return s..(' '):rep(n - #s) end
 local props_conv = {g = 'r', s = 'w', gs = 'rw', sg = 'rw'}
 
 function object:inspect()
+	local glue = require'glue'
 	--collect data
 	local supers = {} --{super1,...}
 	local keys = {} --{super = {key1 = true,...}}
