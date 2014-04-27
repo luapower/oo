@@ -168,7 +168,7 @@ Write:
 ~~~{.lua}
 function apple:override_pick(inherited, arg, ...)
 	print('picking', arg)
-	local ret = inherited(self, arg)
+	local ret = inherited(self, arg, ...)
 	print('picked', ret)
 	return ret
 end
