@@ -32,7 +32,7 @@ Object system with virtual properties and method overriding hooks.
  * introspection:
    * `self:allpairs() -> iterator() -> name, value, source` - iterate all properties, including inherited _and overriden_ ones.
    * `self:properties()` -> get a table of all current properties and values, including inherited ones.
-   * `self:inspect()` - inspect the class/instance structure and contents in detail.
+   * `self:inspect()` - inspect the class/instance structure and contents in detail (requires [glue]).
  * overridable subclassing and instantiation mechanisms:
    * `oo.class() -> fruit` is sugar for `oo.object:subclass() -> fruit`
    * `oo.class(fruit) -> apple` is sugar for `fruit:subclass() -> apple`
