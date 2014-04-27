@@ -1,6 +1,6 @@
 ---
 project: oo
-tagline: object system with properties and hooks
+tagline: fancy object system
 ---
 
 ## `local oo = require'oo'`
