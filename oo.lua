@@ -56,6 +56,13 @@ function object:afterhook(method_name, hook)
 	end)
 end
 
+function object:overridehook(method_name, hook)
+	local method = self[method_name] or glue.pass
+	rawset(self, method_name, function(self, ...)
+		return hook(self, method, ...)
+	end)
+end
+
 function object:getproperty(k)
 	if type(k) == 'string' and rawget(self, 'get_'..k) then --virtual property
 		return rawget(self, 'get_'..k)(self, k)
@@ -86,6 +93,9 @@ function object:setproperty(k,v)
 		elseif k:find'^after_' then --install after hook
 			local method_name = k:match'^after_(.*)'
 			self:afterhook(method_name, v)
+		elseif k:find'^override_' then --install override hook
+			local method_name = k:match'^override_(.*)'
+			self:overridehook(method_name, v)
 		else
 			rawset(self, k, v)
 		end

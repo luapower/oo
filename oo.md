@@ -1,6 +1,6 @@
 ---
 project: oo
-tagline: object system with virtual properties
+tagline: object system with properties and hooks
 ---
 
 ## `local oo = require'oo'`
@@ -16,18 +16,19 @@ Object system with virtual properties and method overriding hooks.
    * `a.super -> apple`
    * `apple.super -> fruit`
  * multiple, static inheritance by request:
-   * `self:inherit(baz[,override])` - statically inherit properties of `baz`, optionally overriding existing properties.
-   * `self:detatch()` - detach from the parent class, in other words statically inherit `self.super`.
+   * `apple:inherit(fruit[,replace])` - statically inherit `fruit`, optionally replacing existing properties.
+   * `apple:detatch()` - detach from the parent class, in other words statically inherit `self.super`.
  * virtual properties with getter and setter:
-   * reading `self.foo` calls `self:get_foo()` to get the value, if `self.get_foo` exists.
-   * assignment to `self.foo` calls `self:set_foo(value)`.
+   * reading `apple.foo` calls `apple:get_foo()` to get the value, if `apple.get_foo` is defined.
+   * assignment to `apple.foo` calls `apple:set_foo(value)` if `apple.set_foo` is defined.
    * missing the setter, the property is considered read-only and the assignment fails.
  * stored properties (no getter):
-   * assignment to `self.foo` calls `self:set_foo(value)` and sets `self.state.foo`.
-   * reading `self.foo` reads back `self.state.foo`.
- * before/after method hooks:
-   * `self:before_baz()` installs a before-hook for method `self:baz()`.
-   * `self:after_baz()` installs an after-hook for method `self:baz()`.
+   * assignment to `apple.foo` calls `apple:set_foo(value)` and sets `apple.state.foo`.
+   * reading `apple.foo` reads back `apple.state.foo`.
+ * method overriding hooks:
+   * `function apple:before_pick(args...) return newargs... end` makes `apple:pick()` call your method first.
+   * `function apple:after_pick(ret...) return newret... end` makes `apple:pick()` call your method last.
+   * `function apple:override_pick(inherited, ...)` lets you override `apple:pick()` and call `inherited(self, ...)`.
  * introspection:
    * `self:allpairs() -> iterator() -> name, value, source` - iterate all properties, including inherited _and overriden_ ones.
    * `self:properties()` -> get a table of all current properties and values, including inherited ones.
@@ -45,7 +46,7 @@ which is useful for creating polymorphic "views" on existing instances.
 
 ~~~{.lua}
 local cls = oo.class()
-cls.classname = 'cls'
+cls.classname = 'cls' --optional, for easy identification
 ~~~
 
 **Instances are created** with `myclass:create(...)` or simply `myclass()`, which in turn calls `myclass:init(...)`
@@ -147,12 +148,45 @@ The setter and getter must be methods of form:
   * `self:getter(k) -> v`
   * `self:setter(k, v)`
 
-## Method hooks
+## Overriding hooks
 
-**Before/after hooks** are sugar for overriding methods. Overriding a method can be done by simply redefining
-it and calling `class.super.<method>(self,...)` inside the new implementation. Most of the time this call
-is done either on the first or on the last line of the new function. With before and after hooks you can
-have that done automatically.
+Overriding hooks are sugar to make method overriding more easy and readable.
+
+Instead of:
+
+~~~{.lua}
+function apple:pick(arg)
+	print('picking', arg)
+	local ret = apple.super.pick(self, arg)
+	print('picked', ret)
+	return ret
+end
+~~~
+
+Write:
+
+~~~{.lua}
+function apple:override_pick(inherited, arg, ...)
+	print('picking', arg)
+	local ret = inherited(self, arg)
+	print('picked', ret)
+	return ret
+end
+~~~
+
+Or even better:
+
+~~~{.lua}
+function apple:before_pick(arg)
+	print('picking', arg)
+end
+
+function apple:after_pick(ret)
+	print('picked', ret)
+	return ret
+end
+
+~~~
 
 By defining `self:before_<method>(...)` a new implementation for `self.<method>` is created which calls the
 before hook (which receives all method's arguments) and then calls the existing (inherited) implementation
@@ -161,6 +195,8 @@ with whatever the hook returns as arguments.
 By defining `self:after_<method>(...)` a new implementation for `self.<method>` is created which calls the
 existing (inherited) implementation, after which it calls the hook with whatever the method returns as arguments,
 and returns whatever the hook returns.
+
+By defining `self:override_<method>(inherited, ...)` you can access `self.super.<method>` as `inherited`.
 
 ~~~{.lua}
 function cls:before_init(foo, bar)

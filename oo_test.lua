@@ -21,6 +21,10 @@ function c1:before_init(...) print('c1 before_init',...); self.b = ...; assert(s
 function c1:after_init() print('c1 after_init') end
 function c2:before_init(...) print('c2 before_init',...); return ... end
 function c2:after_init() print('c2 after_init') end
+function c2:override_init(inherited, ...)
+	print('c2 overriden init', ...)
+	return inherited(self, ...)
+end
 assert(c2.init ~= c1.init)
 local o = c2('o')
 assert(o.a == 1)
