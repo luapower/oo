@@ -33,6 +33,18 @@ assert(o.c == 2)
 assert(o.super == c2)
 assert(o.unknown == nil)
 
+--arg passing through hooks
+function c1:test_args(x, y) return x + y, x * y end
+function c2:before_test_args(x, y) return x * 4, y * 4 end
+function c2:after_test_args(x, y) return x / 2, y / 2 end
+function c2:override_test_args(inherited, x, y)
+	x, y = inherited(self, x * 10, y * 10)
+	return x * 50, y * 50
+end
+local x, y = o:test_args(2, 3)
+assert(x == (2 * 10 * 4 + 3 * 10 * 4) / 2 * 50)
+assert(y == (2 * 10 * 4 * 3 * 10 * 4) / 2 * 50)
+
 --virtual properties
 function o:get_x() assert(self.__x == 42) return self.__x end
 function o:set_x(x) assert(x == 42) self.__x = x end

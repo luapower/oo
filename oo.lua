@@ -42,18 +42,19 @@ function meta.__newindex(o,k,v)
 end
 
 local function noop() end
+local function pass(...) return ... end
 
 function object:beforehook(method_name, hook)
-	local method = self[method_name] or noop
+	local method = self[method_name] or pass
 	rawset(self, method_name, function(self, ...)
 		return method(self, hook(self, ...))
 	end)
 end
 
 function object:afterhook(method_name, hook)
-	local method = self[method_name] or noop
+	local method = self[method_name] or pass
 	rawset(self, method_name, function(self, ...)
-		return hook(method(self, ...))
+		return hook(self, method(self, ...))
 	end)
 end
 
