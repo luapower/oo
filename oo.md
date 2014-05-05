@@ -17,7 +17,7 @@ Object system with virtual properties and method overriding hooks.
    * `apple.super -> fruit`
  * multiple, static inheritance by request:
    * `apple:inherit(fruit[,replace])` - statically inherit `fruit`, optionally replacing existing properties.
-   * `apple:detatch()` - detach from the parent class, in other words statically inherit `self.super`.
+   * `apple:detach()` - detach from the parent class, in other words statically inherit `self.super`.
  * virtual properties with getter and setter:
    * reading `apple.foo` calls `apple:get_foo()` to get the value, if `apple.get_foo` is defined.
    * assignment to `apple.foo` calls `apple:set_foo(value)` if `apple.set_foo` is defined.
