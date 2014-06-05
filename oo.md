@@ -10,47 +10,52 @@ Object system with virtual properties and method overriding hooks.
 ## In a nutshell
 
  * single, dynamic inheritance by default:
-   * `fruit = oo.class()`
-   * `apple = oo.class(fruit)`
-   * `a = apple(...)`
-   * `a.super -> apple`
-   * `apple.super -> fruit`
+   * `Fruit = oo.Fruit()`
+   * `Apple = oo.Apple(Fruit)`
+   * `apple = Apple(...)`
+   * `apple.super -> Apple`
+   * `Apple.super -> Fruit`
  * multiple, static inheritance by request:
-   * `apple:inherit(fruit[,replace])` - statically inherit `fruit`, optionally replacing existing properties.
-   * `apple:detach()` - detach from the parent class, in other words statically inherit `self.super`.
+   * `Apple:inherit(Fruit[,replace])` - statically inherit `Fruit`, optionally replacing existing properties.
+   * `Apple:detach()` - detach from the parent class, in other words statically inherit `self.super`.
  * virtual properties with getter and setter:
-   * reading `apple.foo` calls `apple:get_foo()` to get the value, if `apple.get_foo` is defined.
-   * assignment to `apple.foo` calls `apple:set_foo(value)` if `apple.set_foo` is defined.
+   * reading `Apple.foo` calls `Apple:get_foo()` to get the value, if `Apple.get_foo` is defined.
+   * assignment to `Apple.foo` calls `Apple:set_foo(value)` if `Apple.set_foo` is defined.
    * missing the setter, the property is considered read-only and the assignment fails.
  * stored properties (no getter):
-   * assignment to `apple.foo` calls `apple:set_foo(value)` and sets `apple.state.foo`.
-   * reading `apple.foo` reads back `apple.state.foo`.
+   * assignment to `Apple.foo` calls `Apple:set_foo(value)` and sets `Apple.state.foo`.
+   * reading `Apple.foo` reads back `Apple.state.foo`.
  * method overriding hooks:
-   * `function apple:before_pick(args...) return newargs... end` makes `apple:pick()` call your method first.
-   * `function apple:after_pick(ret...) return newret... end` makes `apple:pick()` call your method last.
-   * `function apple:override_pick(inherited, ...)` lets you override `apple:pick()` and call `inherited(self, ...)`.
+   * `function Apple:before_pick(args...) return newargs... end` makes `Apple:pick()` call your method first.
+   * `function Apple:after_pick(ret...) return newret... end` makes `Apple:pick()` call your method last.
+   * `function Apple:override_pick(inherited, ...)` lets you override `Apple:pick()` and call `inherited(self, ...)`.
  * introspection:
    * `self:allpairs() -> iterator() -> name, value, source` - iterate all properties, including inherited _and overriden_ ones.
    * `self:properties()` -> get a table of all current properties and values, including inherited ones.
    * `self:inspect()` - inspect the class/instance structure and contents in detail (requires [glue]).
  * overridable subclassing and instantiation mechanisms:
-   * `oo.class() -> fruit` is sugar for `oo.object:subclass() -> fruit`
-   * `oo.class(fruit) -> apple` is sugar for `fruit:subclass() -> apple`
-   * `apple(...) -> a` is sugar for `apple:create(...) -> a`
-      * `apple:create()` calls `a:init(...)`
+   * `Fruit = oo.Fruit()` is sugar for `Fruit = oo.Object:subclass()`
+   * `Apple = oo.Apple(Fruit)` is sugar for `Apple = Fruit:subclass()`
+   * `apple = Apple(...)` is sugar for `apple = Apple:create(...)`
+      * `Apple:create()` calls `apple:init(...)`
 
 ## Inheritance and instantiation
 
-**Classes are created** with `oo.class([super])`, where `super` is usually another class, but can also be an instance,
-which is useful for creating polymorphic "views" on existing instances.
+**Classes are created** with `oo.ClassName([super])`, where `super` is usually another class,
+but can also be an instance, which is useful for creating polymorphic "views" on existing instances.
+
+~~~{.lua}
+local Fruit = oo.Fruit()
+~~~
+
+You can also create anonymous classes with `oo.class([super])`:
 
 ~~~{.lua}
 local cls = oo.class()
-cls.classname = 'cls' --optional, for easy identification
 ~~~
 
-**Instances are created** with `myclass:create(...)` or simply `myclass()`, which in turn calls `myclass:init(...)`
-which is the object constructor. While `myclass` is normally a class, it can also be an instance, which effectively
+**Instances are created** with `cls:create(...)` or simply `cls()`, which in turn calls `cls:init(...)`
+which is the object constructor. While `cls` is normally a class, it can also be an instance, which effectively
 enables prototype-based inheritance.
 
 ~~~{.lua}
@@ -61,7 +66,7 @@ local obj = cls()
 
 ~~~{.lua}
 assert(obj.super == cls)
-assert(cls.super == oo.object)
+assert(cls.super == oo.Object)
 ~~~
 
 **Inheritance is dynamic**: properties are looked up at runtime in `self.super` and changing a property or method
@@ -155,9 +160,9 @@ Overriding hooks are sugar to make method overriding more easy and readable.
 Instead of:
 
 ~~~{.lua}
-function apple:pick(arg)
+function Apple:pick(arg)
 	print('picking', arg)
-	local ret = apple.super.pick(self, arg)
+	local ret = Apple.super.pick(self, arg)
 	print('picked', ret)
 	return ret
 end
@@ -166,7 +171,7 @@ end
 Write:
 
 ~~~{.lua}
-function apple:override_pick(inherited, arg, ...)
+function Apple:override_pick(inherited, arg, ...)
 	print('picking', arg)
 	local ret = inherited(self, arg, ...)
 	print('picked', ret)
@@ -177,11 +182,11 @@ end
 Or even better:
 
 ~~~{.lua}
-function apple:before_pick(arg)
+function Apple:before_pick(arg)
 	print('picking', arg)
 end
 
-function apple:after_pick(ret)
+function Apple:after_pick(ret)
 	print('picked', ret)
 	return ret
 end
@@ -213,3 +218,7 @@ function cls:before_destroy()
   --destroy resources
 end
 ~~~
+
+If you don't know the name of the method you want to override until runtime, use `cls:before(name, func)`,
+`cls:after(name, func)` and `cls:override(name, func)` instead.
+

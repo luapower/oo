@@ -57,6 +57,15 @@ o.s = 13
 assert(o.s == 13)
 assert(o.state.s == 13)
 
+--registering
+local MyClass = oo.MyClass()
+assert(MyClass == oo.MyClass)
+assert(MyClass.classname == 'MyClass')
+local MySubClass = oo.MySubClass'MyClass'
+assert(MySubClass == oo.MySubClass)
+assert(MySubClass.classname == 'MySubClass')
+assert(MySubClass.super == MyClass)
+
 --inspect
 print'-------------- (before collapsing) -----------------'
 o:inspect()

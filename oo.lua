@@ -1,24 +1,18 @@
 --object system with virtual properties and method overriding hooks (Cosmin Apreutesei, public domain)
 
---[[ TODO: find a nice way to provide a classname on the same line
-local Window = oo.class.Window(BaseWindow)
-local Window = BaseWindow:subclass'Window'
-local Window = oo.class(BaseWindow, 'Window')
-]]
-
-local object = {classname = 'object'}
+local Object = {classname = 'Object'}
 
 local function class(super,...)
-	return (super or object):subclass(...)
+	return (super or Object):subclass(...)
 end
 
-function object:subclass()
+function Object:subclass()
 	return setmetatable({super = self, classname = ''}, getmetatable(self))
 end
 
-function object:init(...) end
+function Object:init(...) end
 
-function object:create(...)
+function Object:create(...)
 	local o = setmetatable({super = self}, getmetatable(self))
 	o:init(...)
 	return o
@@ -44,28 +38,28 @@ end
 local function noop() end
 local function pass(...) return ... end
 
-function object:beforehook(method_name, hook)
+function Object:before(method_name, hook)
 	local method = self[method_name] or pass
 	rawset(self, method_name, function(self, ...)
 		return method(self, hook(self, ...))
 	end)
 end
 
-function object:afterhook(method_name, hook)
+function Object:after(method_name, hook)
 	local method = self[method_name] or pass
 	rawset(self, method_name, function(self, ...)
 		return hook(self, method(self, ...))
 	end)
 end
 
-function object:overridehook(method_name, hook)
+function Object:override(method_name, hook)
 	local method = self[method_name] or noop
 	rawset(self, method_name, function(self, ...)
 		return hook(self, method, ...)
 	end)
 end
 
-function object:getproperty(k)
+function Object:getproperty(k)
 	if type(k) == 'string' and rawget(self, 'get_'..k) then --virtual property
 		return rawget(self, 'get_'..k)(self, k)
 	elseif rawget(self, 'set_'..k) then --stored property
@@ -77,7 +71,7 @@ function object:getproperty(k)
 	end
 end
 
-function object:setproperty(k,v)
+function Object:setproperty(k,v)
 	if type(k) == 'string' then
 		if rawget(self, 'get_'..k) then --virtual property
 			if rawget(self, 'set_'..k) then --r/w property
@@ -91,13 +85,13 @@ function object:setproperty(k,v)
 			self.state[k] = v
 		elseif k:find'^before_' then --install before hook
 			local method_name = k:match'^before_(.*)'
-			self:beforehook(method_name, v)
+			self:before(method_name, v)
 		elseif k:find'^after_' then --install after hook
 			local method_name = k:match'^after_(.*)'
-			self:afterhook(method_name, v)
+			self:after(method_name, v)
 		elseif k:find'^override_' then --install override hook
 			local method_name = k:match'^override_(.*)'
-			self:overridehook(method_name, v)
+			self:override(method_name, v)
 		else
 			rawset(self, k, v)
 		end
@@ -107,7 +101,7 @@ function object:setproperty(k,v)
 end
 
 --returns iterator<k,v,source>; iterates bottom-up in the inheritance chain
-function object:allpairs()
+function Object:allpairs()
 	local source = self
 	local k,v
 	return function()
@@ -122,7 +116,7 @@ function object:allpairs()
 end
 
 --returns all properties including the inherited ones and their current values
-function object:properties()
+function Object:properties()
 	local values = {}
 	for k,v,source in self:allpairs() do
 		if values[k] == nil then
@@ -132,7 +126,7 @@ function object:properties()
 	return values
 end
 
-function object:inherit(other, override)
+function Object:inherit(other, override)
 	local properties = other:properties()
 	for k,v in pairs(properties) do
 		if (override or rawget(self, k) == nil)
@@ -154,13 +148,13 @@ function object:inherit(other, override)
 	end
 end
 
-function object:detach()
+function Object:detach()
 	self:inherit(self.super)
 	self.classname = self.classname --if we're an instance, we would have no classname
 	self.super = nil
 end
 
-function object:gen_properties(names, getter, setter)
+function Object:gen_properties(names, getter, setter)
 	for k in pairs(names) do
 		if getter then
 			self['get_'..k] = function(self) return getter(self, k) end
@@ -175,7 +169,7 @@ local function pad(s, n) return s..(' '):rep(n - #s) end
 
 local props_conv = {g = 'r', s = 'w', gs = 'rw', sg = 'rw'}
 
-function object:inspect()
+function Object:inspect()
 	local glue = require'glue'
 	--collect data
 	local supers = {} --{super1,...}
@@ -219,11 +213,24 @@ function object:inspect()
 	end
 end
 
-setmetatable(object, meta)
+setmetatable(Object, meta)
 
 if not ... then require'oo_test' end
 
-return {
+return setmetatable({
 	class = class,
-	object = object,
-}
+	Object = Object,
+}, {
+	__index = function(t,k)
+		return function(super, ...)
+			if type(super) == 'string' then
+				super = t[super]
+			end
+			local cls = class(super, ...)
+			cls.classname = k
+			t[k] = cls
+			return cls
+		end
+	end
+})
+
