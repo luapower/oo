@@ -1,4 +1,6 @@
---object system with virtual properties and method overriding hooks (Cosmin Apreutesei, public domain)
+
+--object system with virtual properties and method overriding hooks.
+--Written by Cosmin Apreutesei. Public Domain.
 
 local Object = {classname = 'Object'}
 
