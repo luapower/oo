@@ -1,5 +1,4 @@
 ---
-project: oo
 tagline: fancy object system
 ---
 
