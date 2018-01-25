@@ -42,7 +42,7 @@ Object system with virtual properties and method overriding hooks.
 	  an event handler
 	* `Apple:falling(args...)` - default event handler for the `falling` event
 	* `Apple:fire('falling', args...)` - call all `falling` event handlers
-	* `Apple:off'falling' - remove all `falling` event handlers
+	* `Apple:off'falling'` - remove all `falling` event handlers
 	* `Apple:off'.ns1' - remove all event handlers on the `ns1` namespace
  * introspection:
    * `self:allpairs() -> iterator() -> name, value, source` - iterate all
