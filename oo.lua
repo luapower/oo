@@ -128,6 +128,8 @@ function Object:is(class)
 		return true
 	elseif self.super then
 		return self.super:is(class)
+	else
+		return false
 	end
 end
 

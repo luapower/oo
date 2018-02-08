@@ -40,6 +40,7 @@ assert(o.unknown == nil)
 
 assert(o:is'c1')
 assert(o:is'c2')
+assert(o:is'o' == false)
 
 --arg passing through hooks
 function c1:test_args(x, y) return x + y, x * y end
