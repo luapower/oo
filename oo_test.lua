@@ -55,22 +55,27 @@ assert(x == (2 * 10 * 4 + 3 * 10 * 4) / 2 * 50)
 assert(y == (2 * 10 * 4 * 3 * 10 * 4) / 2 * 50)
 
 --virtual properties
-function o:get_x() assert(self.__x == 42); return self.__x end
-function o:set_x(x) assert(x == 42); self.__x = x end
+local getter_called, setter_called
+function o:get_x() getter_called = true; return self.__x end
+function o:set_x(x) setter_called = true; self.__x = x end
 o.x = 42
+assert(setter_called)
 assert(o.x == 42)
+assert(getter_called)
 
 --stored properties
 function o:set_s(s) print('set_s', s) assert(s == 13) end
 o.s = 13
 assert(o.s == 13)
-assert(o.state.s == 13)
 
 --virtual properties and inheritance
-function c1:get_c1x() return self.__c1x end
-function c1:set_c1x(x) self.__c1x = x end
+local getter_called, setter_called
+function c1:get_c1x() getter_called = true; return self.__c1x end
+function c1:set_c1x(x) setter_called = true; self.__c1x = x end
 o.c1x = 43
+assert(setter_called)
 assert(o.c1x == 43)
+assert(getter_called)
 assert(o.__c1x == 43)
 
 --registering
@@ -83,7 +88,6 @@ assert(MySubClass.classname == 'MySubClass')
 assert(MySubClass.super == MyClass)
 
 --events
-
 local MyClass = oo.MyClass()
 local obj = MyClass()
 local n = 0
@@ -158,3 +162,40 @@ do
 	o:on('x', function() end) --to create `observers`
 	o:inspect(true)
 end
+
+--performance
+local root = oo.class()
+local super = root
+for i=1,10 do --inheritance depth
+	super = oo.class(super)
+end
+
+local rw
+function root:get_rw() return rw end
+function root:set_rw(v) rw = v end
+local ro = 'ro'
+function root:get_ro(v) return ro end
+function root:set_wo(v) end
+function root:method(i) end
+
+--super:detach()
+--assert(type(rawget(rawget(super, '__getters'), 'rw')) == 'function')
+
+local clock = require'time'.clock
+local t0 = clock()
+local n = 10^4
+super.rw = 'rw'
+assert(rw == 'rw')
+super.own = 'own'
+super.wo = 'wo'
+for i=1,n do
+	--super:method(i)
+	--assert(super.wo == 'wo')
+	assert(super.rw == 'rw')
+	--assert(super.ro == 'ro')
+	--super.own = i
+	--assert(super.own == i)
+end
+local t1 = clock()
+print(n / (t1 - t0) / 10^6)
+
