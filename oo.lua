@@ -14,7 +14,7 @@ function Object:subclass()
 	return setmetatable({super = self, classname = ''}, getmetatable(self))
 end
 
-function Object:init(...) end
+function Object:init(...) return ... end
 
 function Object:create(...)
 	local o = setmetatable({super = self}, getmetatable(self))
