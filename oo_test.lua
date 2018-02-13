@@ -1,4 +1,5 @@
 local oo = require'oo'
+local clock = require'time'.clock
 
 --inheritance
 local c1 = oo.class()
@@ -164,38 +165,84 @@ do
 end
 
 --performance
-local root = oo.class()
-local super = root
-for i=1,10 do --inheritance depth
-	super = oo.class(super)
+print'------------------ (performance) -------------------'
+
+local function perf_test(title, iter_count, detach, test_func)
+	local root = oo.class()
+	local super = root
+	for i=1,10 do --inheritance depth
+		super = oo.class(super)
+	end
+	local o = super()
+
+	local rw
+	function root:get_rw() return rw end
+	function root:set_rw(v) rw = v end
+	local ro = 'ro'
+	function root:get_ro(v) return ro end
+	function root:set_wo(v) end
+	function root:method(i) end
+	o.rw = 'rw'
+	assert(rw == 'rw')
+	o.own = 'own'
+	o.wo = 'wo'
+
+	if detach then
+		o:detach()
+		title = title .. ' (detached)'
+	end
+
+	local t0 = clock()
+	test_func(o, iter_count)
+	local t1 = clock()
+
+	local speed = iter_count / (t1 - t0) / 10^6
+	print(string.format('%-20s: %10.3f million iterations', title, speed))
 end
 
-local rw
-function root:get_rw() return rw end
-function root:set_rw(v) rw = v end
-local ro = 'ro'
-function root:get_ro(v) return ro end
-function root:set_wo(v) end
-function root:method(i) end
+local function perf_tests(n, detach)
+	perf_test('method', n, detach, function(o, n)
+		for i=1,n do
+			o:method(i)
+		end
+	end)
+	perf_test('rw/r', n, detach, function(o, n)
+		for i=1,n do
+			assert(o.rw == 'rw')
+		end
+	end)
+	perf_test('rw/w', n, detach, function(o, n)
+		for i=1,n do
+			o.rw = i
+		end
+	end)
+	perf_test('rw/r+w', n, detach, function(o, n)
+		for i=1,n do
+			o.rw = i
+			assert(o.rw == i)
+		end
+	end)
 
---super:detach()
---assert(type(rawget(rawget(super, '__getters'), 'rw')) == 'function')
+	do return end
 
-local clock = require'time'.clock
-local t0 = clock()
-local n = 10^4
-super.rw = 'rw'
-assert(rw == 'rw')
-super.own = 'own'
-super.wo = 'wo'
-for i=1,n do
-	--super:method(i)
-	--assert(super.wo == 'wo')
-	assert(super.rw == 'rw')
-	--assert(super.ro == 'ro')
-	--super.own = i
-	--assert(super.own == i)
+	perf_test('own/r', n, detach, function(o, n)
+		for i=1,n do
+			assert(o.own == 'own')
+		end
+	end)
+	perf_test('own/w', n, detach, function(o, n)
+		for i=1,n do
+			o.own = i
+		end
+	end)
+	perf_test('own/r+w', n, detach, function(o, n)
+		for i=1,n do
+			o.own = i
+			assert(o.own == i)
+		end
+	end)
 end
-local t1 = clock()
-print(n / (t1 - t0) / 10^6)
+perf_tests(10^5, false)
+print()
+perf_tests(10^6, true)
 
