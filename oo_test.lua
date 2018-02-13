@@ -44,34 +44,46 @@ assert(o:is'c2')
 assert(o:is'o' == false)
 
 --arg passing through hooks
-function c1:test_args(x, y) return x + y, x * y end
-function c2:before_test_args(x, y) return x * 4, y * 4 end
-function c2:after_test_args(x, y) return x / 2, y / 2 end
+local t = {}
+function c1:test_args(x, y) t[#t+1] = 'test'; assert(x + y == 5) end
+function c2:before_test_args(x, y) t[#t+1] = 'before'; assert(x + y == 5) end
+function c2:after_test_args(x, y) t[#t+1] = 'after'; return x + y end
 function c2:override_test_args(inherited, x, y)
-	x, y = inherited(self, x * 10, y * 10)
-	return x * 50, y * 50
+	t[#t+1] = 'override1'
+	assert(inherited(self, x, y) == x + y)
+	t[#t+1] = 'override2'
+	return x + y + 1
 end
-local x, y = o:test_args(2, 3)
-assert(x == (2 * 10 * 4 + 3 * 10 * 4) / 2 * 50)
-assert(y == (2 * 10 * 4 * 3 * 10 * 4) / 2 * 50)
+assert(o:test_args(2, 3) == 2 + 3 + 1)
+assert(#t == 5)
+assert(t[1] == 'override1')
+assert(t[2] == 'before')
+assert(t[3] == 'test')
+assert(t[4] == 'after')
+assert(t[5] == 'override2')
 
 --virtual properties
-function o:get_x() assert(self.__x == 42); return self.__x end
-function o:set_x(x) assert(x == 42); self.__x = x end
+local getter_called, setter_called
+function o:get_x() getter_called = true; return self.__x end
+function o:set_x(x) setter_called = true; self.__x = x end
 o.x = 42
+assert(setter_called)
 assert(o.x == 42)
+assert(getter_called)
 
 --stored properties
 function o:set_s(s) print('set_s', s) assert(s == 13) end
 o.s = 13
 assert(o.s == 13)
-assert(o.state.s == 13)
 
 --virtual properties and inheritance
-function c1:get_c1x() return self.__c1x end
-function c1:set_c1x(x) self.__c1x = x end
+local getter_called, setter_called
+function c1:get_c1x() getter_called = true; return self.__c1x end
+function c1:set_c1x(x) setter_called = true; self.__c1x = x end
 o.c1x = 43
+assert(setter_called)
 assert(o.c1x == 43)
+assert(getter_called)
 assert(o.__c1x == 43)
 
 --registering
@@ -84,7 +96,6 @@ assert(MySubClass.classname == 'MySubClass')
 assert(MySubClass.super == MyClass)
 
 --events
-
 local MyClass = oo.MyClass()
 local obj = MyClass()
 local n = 0
