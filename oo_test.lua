@@ -44,16 +44,23 @@ assert(o:is'c2')
 assert(o:is'o' == false)
 
 --arg passing through hooks
-function c1:test_args(x, y) return x + y, x * y end
-function c2:before_test_args(x, y) return x * 4, y * 4 end
-function c2:after_test_args(x, y) return x / 2, y / 2 end
+local t = {}
+function c1:test_args(x, y) t[#t+1] = 'test'; assert(x + y == 5) end
+function c2:before_test_args(x, y) t[#t+1] = 'before'; assert(x + y == 5) end
+function c2:after_test_args(x, y) t[#t+1] = 'after'; return x + y end
 function c2:override_test_args(inherited, x, y)
-	x, y = inherited(self, x * 10, y * 10)
-	return x * 50, y * 50
+	t[#t+1] = 'override1'
+	assert(inherited(self, x, y) == x + y)
+	t[#t+1] = 'override2'
+	return x + y + 1
 end
-local x, y = o:test_args(2, 3)
-assert(x == (2 * 10 * 4 + 3 * 10 * 4) / 2 * 50)
-assert(y == (2 * 10 * 4 * 3 * 10 * 4) / 2 * 50)
+assert(o:test_args(2, 3) == 2 + 3 + 1)
+assert(#t == 5)
+assert(t[1] == 'override1')
+assert(t[2] == 'before')
+assert(t[3] == 'test')
+assert(t[4] == 'after')
+assert(t[5] == 'override2')
 
 --virtual properties
 local getter_called, setter_called

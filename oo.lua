@@ -14,7 +14,7 @@ function Object:subclass()
 	return setmetatable({super = self, classname = ''}, getmetatable(self))
 end
 
-function Object:init(...) return ... end
+function Object:init(...) end
 
 function Object:create(...)
 	local o = setmetatable({super = self}, getmetatable(self))
@@ -45,19 +45,21 @@ function meta.__newindex(o,k,v)
 end
 
 local function noop() end
-local function pass(...) return ... end
+local function pass(...) return end
 
 function Object:before(method_name, hook)
 	local method = self[method_name] or pass
 	rawset(self, method_name, function(self, ...)
-		return method(self, hook(self, ...))
+		hook(self, ...)
+		return method(self, ...)
 	end)
 end
 
 function Object:after(method_name, hook)
 	local method = self[method_name] or pass
 	rawset(self, method_name, function(self, ...)
-		return hook(self, method(self, ...))
+		method(self, ...)
+		return hook(self, ...)
 	end)
 end
 
@@ -70,11 +72,13 @@ end
 
 function Object:getproperty(k)
 	if type(k) == 'string' then
-		local get = self.__getters and self.__getters[k]
+		local getters = self.__getters
+		local get = getters and getters[k]
 		if get then --virtual property
 			return get(self, k)
 		else
-			local set = self.__setters and self.__setters[k]
+			local setters = self.__setters
+			local set = setters and setters[k]
 			if set then --stored property
 				local state = rawget(self, '__state')
 				if state then
@@ -108,16 +112,20 @@ function Object:setproperty(k,v)
 	if type(k) ~= 'string' then
 		rawset(self, k, v)
 	end
-	local get = self.__getters and self.__getters[k]
-	local set = self.__setters and self.__setters[k]
+	local getters = self.__getters
+	local setters = self.__setters
+	local get = getters and getters[k]
+	local set = setters and setters[k]
 	if get and set then --r/w property
 		set(self, v)
 	elseif set then --stored property
-		if not rawget(self, '__state') then
-			rawset(self, '__state', {})
+		local state = rawget(self, '__state')
+		if not state then
+			state = {}
+			rawset(self, '__state', state)
 		end
 		set(self, v) --if the setter breaks, the property is not updated
-		self.__state[k] = v
+		state[k] = v
 	elseif get then --r/o property
 		error(string.format('trying to set read only property "%s"', k))
 	elseif k:find'^get_' then --install getter
