@@ -209,13 +209,33 @@ local function perf_tests(n, detach)
 			o.rw = i
 		end
 	end)
-	perf_test('own', n, detach, function(o, n)
+	perf_test('rw/r+w', n, detach, function(o, n)
+		for i=1,n do
+			o.rw = i
+			assert(o.rw == i)
+		end
+	end)
+
+	do return end
+
+	perf_test('own/r', n, detach, function(o, n)
+		for i=1,n do
+			assert(o.own == 'own')
+		end
+	end)
+	perf_test('own/w', n, detach, function(o, n)
+		for i=1,n do
+			o.own = i
+		end
+	end)
+	perf_test('own/r+w', n, detach, function(o, n)
 		for i=1,n do
 			o.own = i
 			assert(o.own == i)
 		end
 	end)
 end
-perf_tests(10^4, false)
-perf_tests(10^5, true)
+perf_tests(10^5, false)
+print()
+perf_tests(10^6, true)
 
