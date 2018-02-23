@@ -31,10 +31,10 @@ Object system with virtual properties and method overriding hooks.
 	  `Apple.state.foo`.
    * reading `Apple.foo` reads back `Apple.state.foo`.
  * method overriding hooks:
-   * `function Apple:before_pick(args...) end` makes `Apple:pick()` call your
-	method first.
-   * `function Apple:after_pick(args...) end` makes `Apple:pick()` call your
-	method last.
+   * `function Apple:before_pick(args...) end` makes `Apple:pick()` call the
+	code inside `before_pick()` first.
+   * `function Apple:after_pick(args...) end` makes `Apple:pick()` call the
+	code inside `after_pick()` last.
    * `function Apple:override_pick(inherited, ...)` lets you override
 	  `Apple:pick()` and call `inherited(self, ...)`.
  * events with optional namespace tags:
@@ -58,10 +58,18 @@ Object system with virtual properties and method overriding hooks.
    * `apple = Apple(...)` is sugar for `apple = Apple:create(...)`
       * `Apple:create()` calls `apple:init(...)`
  * virtual classes (nested inner classes whose fields and methods can be
- overridden by subclasses of the outer class): just make the class a field
- of the outer class and instantiate it inside the outer's constructor with
- `self:inner_class()`, which passes the outer object as the second arg to
- the constructor of the inner class (the first arg is the inner object).
+ overridden by subclasses of the outer class): just make the inner class a
+ field of the outer class and instantiate it inside the outer's constructor
+ (or other method) with `self:inner_class()`. this is cool because:
+	* it allows subclassing the inner class in subclasses of the outer class
+	by just replacing the `inner_class` field.
+   * using `self:inner_class()` instead of `self.inner_class()` passes the
+	outer object as the second arg to the constructor of the inner object
+	(the first arg is the inner object) so that you can reference the outer
+	object from inside the inner object.
+	* the`inner_class` field is seen as a method of the outer class so it can
+	be made part of its public API without any additional wrapping, and it
+	can also be overriden with a normal method in subclasses of outer.
 
 ## Inheritance and instantiation
 
