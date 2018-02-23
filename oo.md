@@ -37,6 +37,8 @@ Object system with virtual properties and method overriding hooks.
 	code inside `after_pick()` last.
    * `function Apple:override_pick(inherited, ...)` lets you override
 	  `Apple:pick()` and call `inherited(self, ...)`.
+ * virtual classes: nested inner classes which can overriden in subclasses
+ of the outer class (see below).
  * events with optional namespace tags:
    * `Apple:on('falling.ns1', function(self, args...) ... end)` - register
 	  an event handler
@@ -57,8 +59,6 @@ Object system with virtual properties and method overriding hooks.
    * `Apple = oo.Apple(Fruit)` is sugar for `Apple = Fruit:subclass()`
    * `apple = Apple(...)` is sugar for `apple = Apple:create(...)`
       * `Apple:create()` calls `apple:init(...)`
- * virtual classes: nested inner classes which can overriden in subclasses
- of the outer class (see below).
 
 ## Inheritance and instantiation
 
