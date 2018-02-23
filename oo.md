@@ -57,19 +57,8 @@ Object system with virtual properties and method overriding hooks.
    * `Apple = oo.Apple(Fruit)` is sugar for `Apple = Fruit:subclass()`
    * `apple = Apple(...)` is sugar for `apple = Apple:create(...)`
       * `Apple:create()` calls `apple:init(...)`
- * virtual classes (nested inner classes whose fields and methods can be
- overridden by subclasses of the outer class): just make the inner class a
- field of the outer class and instantiate it inside the outer's constructor
- (or other method) with `self:inner_class()`. this is cool because:
-	* it allows subclassing the inner class in subclasses of the outer class
-	by just replacing the `inner_class` field.
-   * using `self:inner_class()` instead of `self.inner_class()` passes the
-	outer object as the second arg to the constructor of the inner object
-	(the first arg is the inner object) so that you can reference the outer
-	object from inside the inner object.
-	* the`inner_class` field is seen as a method of the outer class so it can
-	be made part of its public API without any additional wrapping, and it
-	can also be overriden with a normal method in subclasses of outer.
+ * virtual classes: nested inner classes which can overriden in subclasses
+ of the outer class (see below).
 
 ## Inheritance and instantiation
 
@@ -274,6 +263,26 @@ end
 If you don't know the name of the method you want to override until runtime,
 use `cls:before(name, func)`, `cls:after(name, func)` and
 `cls:override(name, func)` instead.
+
+## Virtual classes
+
+Virtual classes are a powerful mechanism for extending composite objects
+which need to instantiate other objects and need a way to allow the
+programmer to extend or replace the classes of those other objects. Virtual
+classes come for free in languages where classes are first-class entitites:
+just make the inner class a field of the outer class and instantiate it
+inside the outer's constructor or method with `self:inner_class()`. this is
+cool because:
+	* it allows subclassing the inner class in subclasses of the outer class
+	by just overriding the `inner_class` field.
+   * using `self:inner_class()` instead of `self.inner_class()` passes the
+	outer object as the second arg to the constructor of the inner object
+	(the first arg is the inner object) so that you can reference the outer
+	object from inside the inner object.
+	* the`inner_class` field is seen as a method of the outer class so it can
+	be made part of its public API without any additional wrapping, and it
+	can also be overriden with a normal method in subclasses of outer.
+
 
 ## Events
 
