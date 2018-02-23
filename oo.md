@@ -28,8 +28,8 @@ Object system with virtual properties and method overriding hooks.
 	  assignment fails.
  * stored properties (no getter):
    * assignment to `Apple.foo` calls `Apple:set_foo(value)` and sets
-	  `Apple.state.foo`.
-   * reading `Apple.foo` reads back `Apple.state.foo`.
+	  `Apple.__state.foo`.
+   * reading `Apple.foo` reads back `Apple.__state.foo`.
  * method overriding hooks:
    * `function Apple:before_pick(args...) end` makes `Apple:pick()` call the
 	code inside `before_pick()` first.
@@ -165,7 +165,7 @@ assert(obj.answer_to_life == 42) --assuming deep_thought can store a number
 ## Virtual properties
 
 **Stored properties** are virtual properties with a setter but no getter.
-The values of those properties are stored in the table `self.state` upon
+The values of those properties are stored in the table `self.__state` upon
 assignment of the property and read back upon indexing the property.
 If the setter breaks, the value is not stored.
 
@@ -174,7 +174,7 @@ function cls:set_answer_to_life(v) deep_thought:set_answer(v) end
 obj = cls()
 obj.answer_to_life = 42
 assert(obj.answer_to_life == 42) --we return the stored the number
-assert(obj.state.answer_to_life == 42) --which we stored here
+assert(obj.__state.answer_to_life == 42) --which we stored here
 ~~~
 
 Virtual and inherited properties are all read by calling
@@ -295,9 +295,9 @@ Events are for associating actions with functions. Events facts:
 * returning a non-nil value from a handler interrupts the event handling
   call chain and the value is returned back by `fire()`.
 * all uninterrupted events fire the `event` meta-event which inserts the
-  event name on arg#1.
+  event name as arg#1.
 * events can be namespace-tagged with `'event.ns'`: namespsaces are useful
   for easy bulk event removal with `obj:off'.ns'`.
 * multiple handlers can be added for the same event and/or namespace.
-* handlers are stored as `self.observers[event] = {handler1, ...}`.
+* handlers are stored as `self.__observers[event] = {handler1, ...}`.
 
