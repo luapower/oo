@@ -1,5 +1,5 @@
 ---
-tagline: object system with virtual properties and method overriding hooks
+tagline: fancy object system
 ---
 
 ## `local oo = require'oo'`
