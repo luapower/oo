@@ -140,9 +140,9 @@ minor detail of setting `self.classname = self.classname` and removing
 `self.super`.
 
 __NOTE:__ Detaching instances _or final classes_ helps preventing LuaJIT from
-bailing out to the interpreter which can result in 100-1000x performance drop.
-In interpreter mode, detaching instances increases performance for method
-lookup by 10x (see benchmarks).
+bailing out to the interpreter which can result in 100x performance drop.
+Even in interpreter mode, detaching instances can increase performance for
+method lookup by 10x (see benchmarks).
 
 You can do this easily with:
 
