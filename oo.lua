@@ -325,6 +325,8 @@ function Object:off(event)
 		for _,t_ev in pairs(self.__observers) do
 			remove_all_ns(t_ev, ns)
 		end
+	else
+		self.__observers = nil
 	end
 end
 
