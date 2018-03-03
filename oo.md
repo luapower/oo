@@ -298,8 +298,9 @@ Events are for associating actions with functions. Events facts:
   call chain and the value is returned back by `fire()`.
 * all uninterrupted events fire the `event` meta-event which inserts the
   event name as arg#1.
-* events can be namespace-tagged with `'event.ns'`: namespsaces are useful
-  for easy bulk event removal with `obj:off'.ns'`.
+* events can be namespace-tagged with `'event.ns'` or `{event, ns}`:
+  namespsaces are useful for easy bulk event removal with `obj:off'.ns'`
+  or `obj:off({nil, ns})`.
 * multiple handlers can be added for the same event and/or namespace.
 * handlers are stored as `self.__observers[event] = {handler1, ...}`.
 
