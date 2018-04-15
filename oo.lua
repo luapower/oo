@@ -26,8 +26,10 @@ local function is(obj, class)
 	end
 end
 
-function Object:subclass(classname)
-	local subclass = {super = self, classname = classname or ''}
+function Object:subclass(classname, subclass)
+	local subclass = subclass or {}
+	subclass.super = self
+	subclass.classname = classname or ''
 	return setmetatable(subclass, getmetatable(self))
 end
 
@@ -92,10 +94,10 @@ function meta:__newindex(k,v)
 		return
 	end
 	local getters = self.__getters
-	local get = getters and getters[k]
-	if get then --r/o property
-		error(string.format('trying to set read only property "%s"', k))
-	elseif k:find'^get_' then --install getter
+	if getters and getters[k] then --replacing a read-only property
+		getters[k] = nil
+	end
+	if k:find'^get_' then --install getter
 		local getters = create_table(self, '__getters')
 		self.__getters[k:sub(5)] = v
 	elseif k:find'^set_' then --install setter
