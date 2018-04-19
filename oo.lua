@@ -18,13 +18,17 @@ local function class(super,...)
 	return (super or Object):subclass(...)
 end
 
-local function is(obj, class)
-	if type(obj) == 'table' and type(obj.is) == 'function' then
-		return obj:is(class)
-	else
-		return false
+local function isfunc(test)
+	return function(obj, class)
+		if type(obj) ~= 'table' then return false end
+		local test = obj[test]
+		if type(test) ~= 'function' then return false end
+		return test(obj, class)
 	end
 end
+local is = isfunc'is'
+local isinstance = isfunc'isinstance'
+local issubclass = isfunc'issubclass'
 
 function Object:subclass(classname, subclass)
 	local subclass = subclass or {}
@@ -179,6 +183,14 @@ function Object:is(class)
 	else
 		return false
 	end
+end
+
+function Object:isinstance(class)
+	return rawget(self, 'classname') == nil and (not class or self:is(class))
+end
+
+function Object:issubclass(class)
+	return rawget(self, 'classname') ~= nil and (not class or self:is(class))
 end
 
 --returns iterator<k,v,source>; iterates bottom-up in the inheritance chain
@@ -434,6 +446,8 @@ setmetatable(Object, meta)
 return setmetatable({
 	class = class,
 	is = is,
+	isinstance = isinstance,
+	issubclass = issubclass,
 	Object = Object,
 }, {
 	__index = function(t,k)
