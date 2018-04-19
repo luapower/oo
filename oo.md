@@ -14,6 +14,7 @@ Object system with virtual properties and method overriding hooks.
    * `apple = Apple(...)`
    * `apple.super -> Apple`
    * `Apple.super -> Fruit`
+   * `apple.isApple, apple.isFruit, Apple.isApple, Apple.isFruit -> true`
  * multiple, static inheritance by request:
    * `Apple:inherit(Fruit[,replace])` - statically inherit `Fruit`,
 	  optionally replacing existing properties.
@@ -47,8 +48,10 @@ Object system with virtual properties and method overriding hooks.
    * `oo.is(obj|class, class|classname) -> true|false` - check instance/class ancestry
    * `oo.isinstance(obj|class[, class|classname]) -> true|false` - check instance ancestry
    * `oo.issubclass(class[, class|classname]) -> true|false` - check class ancestry
-	* `self:is(class|classname) -> true|false` - check instance/class ancestry
-   * `self:allpairs() -> iterator() -> name, value, source` - iterate all
+	* `apple:is(class|classname) -> true|false` - check instance/class ancestry
+	* `apple:isinstance([class|classname]) -> true|false` - check instance ancestry
+	* `Apple:issubclass([class|classname]) -> true|false` - check class ancestry
+	* `self:allpairs() -> iterator() -> name, value, source` - iterate all
 	  properties, including inherited _and overriden_ ones.
    * `self:properties()` -> get a table of all current properties and values,
 	  including inherited ones.

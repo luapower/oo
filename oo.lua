@@ -34,6 +34,9 @@ function Object:subclass(classname, subclass)
 	local subclass = subclass or {}
 	subclass.super = self
 	subclass.classname = classname or ''
+	if classname then
+		subclass['is'..classname] = true
+	end
 	return setmetatable(subclass, getmetatable(self))
 end
 
