@@ -45,9 +45,9 @@ Object system with virtual properties and method overriding hooks.
 	* `Apple:issubclass([class|classname]) -> true|false` - check class ancestry
 	* `apple:hasproperty(name) -> false | true, 'field'|'property' - check if property
 	exists without accessing its value
-	* `self:allpairs() -> iterator() -> name, value, source` - iterate all
+	* `self:allpairs([max_parent]) -> iterator() -> name, value, source` - iterate all
 	  properties, including inherited _and overriden_ ones.
-   * `self:properties()` -> get a table of all current properties and values,
+   * `self:properties([max_parent])` -> get a table of all current properties and values,
 	  including inherited ones.
    * `self:inspect([show_oo_fields])` - inspect the class/instance structure
 	  and contents in detail (requires [glue]).

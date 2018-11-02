@@ -206,12 +206,13 @@ function Object:issubclass(class)
 end
 
 --returns iterator<k,v,source>; iterates bottom-up in the inheritance chain
-function Object:allpairs()
+function Object:allpairs(max_parent)
 	local source = self
 	local k,v
 	return function()
 		k,v = next(source,k)
 		if k == nil then
+			if source == max_parent then return nil end
 			source = rawget(source, 'super')
 			if source == nil then return nil end
 			k,v = next(source)
@@ -221,9 +222,9 @@ function Object:allpairs()
 end
 
 --returns all properties including the inherited ones and their current values
-function Object:properties()
+function Object:properties(max_parent)
 	local values = {}
-	for k,v,source in self:allpairs() do
+	for k,v,source in self:allpairs(max_parent) do
 		if values[k] == nil then
 			values[k] = v
 		end
@@ -253,18 +254,18 @@ local function copy_table(dst, src, k, override)
 	end
 end
 
-function Object:inherit(other, override)
+function Object:inherit(other, override, max_parent)
 	other = other or rawget(self, 'super')
 	if not is(other, Object) then --plain table, treat is as mixin
 		for k,v in pairs(other) do
-			if override or self[k] == nil then
+			if override or not self:hasproperty(k) then
 				self[k] = v --not rawsetting so that meta-methods apply
 			end
 		end
 	else --oo class or instance
-		local properties = other:properties()
+		local properties = other:properties(max_parent)
 		for k,v in pairs(properties) do
-			if (override or rawget(self, k) == nil)
+			if (override or not self:hasproperty(k))
 				and k ~= 'classname' --keep the classname (preserve identity)
 				and k ~= 'super' --keep super (preserve dynamic inheritance)
 				and k ~= '__getters' --getters are deep-copied
