@@ -325,6 +325,6 @@ Instance fields are accessed directly but methods and default values
 (class fields) go through a slower dynamic dispatch function (it's the
 price you pay for virtual properties). Copying class fields to the instance
 by calling `self:inherit()` will short-circuit this lookup at the expense
-of more memory consumption. Missing fields go through the same function too
-so initializing fields that don't have a default value to `false` will also
-speed up their lookup.
+of more memory consumption. Fields with a `nil` value go through the same
+function too so providing a `false` default value to those fields will
+also speed up their lookup.
