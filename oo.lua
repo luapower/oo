@@ -6,6 +6,8 @@ if not ... then require'oo_test'; return end
 
 local Object = {classname = 'Object'}
 
+setmetatable(Object, Object)
+
 local function class(super,...)
 	return (super or Object):subclass(...)
 end
@@ -29,7 +31,10 @@ function Object:subclass(classname, overrides)
 	if classname then
 		subclass['is'..classname] = true
 	end
-	setmetatable(subclass, getmetatable(self))
+	setmetatable(subclass, subclass)
+	subclass.__index    = self
+	subclass.__newindex = self.__newindex
+	subclass.__call     = self.__call
 	if overrides then
 		for k,v in pairs(overrides) do
 			subclass[k] = v
@@ -38,112 +43,122 @@ function Object:subclass(classname, overrides)
 	return subclass
 end
 
-function Object:init(...) return ... end
+function Object:__call(...)
+	return self:create(...)
+end
+
+--create a table in self[k] that inherits dynamically from self.super[k],
+--recursively creating all the self.super[k] tables if they're missing.
+local function create_table(self, k)
+	local t = rawget(self, k)
+	if t ~= nil then
+		return t
+	end
+	t = {}
+	rawset(self, k, t)
+	setmetatable(t, t)
+	local super = rawget(self, 'super')
+	if super then
+		t.__index = create_table(super, k)
+	end
+	return t
+end
+
+function Object:__newindex(k,v)
+	if type(k) == 'string' then
+		if k:find'^get_' or k:find'^set_' then --install getter or setter
+			local name = k:sub(5)
+			local tname = k:find'^get_' and '__getters' or '__setters'
+			create_table(self, tname)[name] = v
+			return
+		elseif k:find'^before_' then --install before hook
+			local method_name = k:match'^before_(.*)'
+			self:before(method_name, v)
+			return
+		elseif k:find'^after_' then --install after hook
+			local method_name = k:match'^after_(.*)'
+			self:after(method_name, v)
+			return
+		elseif k:find'^override_' then --install override hook
+			local method_name = k:match'^override_(.*)'
+			self:override(method_name, v)
+			return
+		elseif k == 'super' and v == nil then
+			error'super cannot be set to nil (set it to false)'
+		end
+	end
+	rawset(self, k, v)
+end
+
+
+function Object:init(...) end --stub
+
+local function make_accessors(self)
+
+	local super   = self.super
+	local getters = self.__getters
+	local setters = self.__setters
+
+	--note: this is the perf. bottleneck of the entire module.
+	function self:__index(k)
+		local get = getters and getters[k]
+		if get then --virtual property
+			return get(self, k)
+		end
+		return super and super[k] --inherited property
+	end
+
+
+	function self:__newindex(k,v)
+		local set = setters and setters[k]
+		if set then --r/w property
+			set(self, v)
+			return
+		end
+		if getters and getters[k] then --read-only property
+			error(string.format('property "%s" is read/only', k))
+		end
+		if type(k) == 'string' then
+			if k:find'^get_' or k:find'^set_' then --install getter or setter
+				local name = k:sub(5)
+				local tname = k:find'^get_' and '__getters' or '__setters'
+				create_table(self, tname)[name] = v
+				return
+			elseif k:find'^before_' then --install before hook
+				local method_name = k:match'^before_(.*)'
+				self:before(method_name, v)
+				return
+			elseif k:find'^after_' then --install after hook
+				local method_name = k:match'^after_(.*)'
+				self:after(method_name, v)
+				return
+			elseif k:find'^override_' then --install override hook
+				local method_name = k:match'^override_(.*)'
+				self:override(method_name, v)
+				return
+			elseif k == 'super' and v == nil then
+				error'super cannot be set to nil'
+			end
+		end
+		rawset(self, k, v)
+	end
+
+end
 
 function Object:create(...)
-	local o = setmetatable({super = self}, getmetatable(self))
+	local o = {super = self}
+	setmetatable(o, o)
+	make_accessors(o)
 	o:init(...)
 	return o
 end
 
-local meta = {}
-
-function meta.__call(o,...)
-	return o:create(...)
-end
-
---note: this is the perf. bottleneck of the entire module.
-function meta:__index(k)
-	if type(k) == 'string' then
-		--some keys are not virtualizable to avoid infinite recursion,
-		--but they are dynamically inheritable nonetheless.
-		if k ~= '__getters' and k ~= '__setters' then
-			if k == 'super' then --'super' is not even inheritable
-				return nil
-			end
-			local isinstance = rawget(self, 'isclass') == nil
-			local getters = isinstance and self.__getters
-			local get = getters and getters[k]
-			if get then --virtual property
-				return get(self, k)
-			end
-		end
-	end
-	local super = rawget(self, 'super')
-	return super and super[k] --inherited property
-end
-
---create a table in t[k] that inherits dynamically from t.super[k],
---recursively creating all the t.super[k] tables if they're missing.
-local function create_table(t, k)
-	local v = rawget(t, k)
-	if v ~= nil then
-		return v
-	end
-	v = {}
-	rawset(t, k, v)
-	setmetatable(v, v)
-	local super = rawget(t, 'super')
-	if super then
-		v.__index = create_table(super, k)
-	end
-	return v
-end
-
---This check is to allow the optimization of copying __setters and __getters
---on the instance (see tests) which, if applied, then overriding getters and
---setters through the instance is not allowed anymore, since that would not
---patch the instance, but it would patch the class instead.
---TODO: find a way to remove this limitation in order to allow overriding
---of getters/setters on instances (no use case for it yet).
-local function check_not_instance(self)
-	local isinstance = rawget(self, 'isclass') == nil
-	assert(not isinstance, 'NYI: trying to define a getter/setter on an instance.')
-end
-
-function meta:__newindex(k,v)
-	if type(k) ~= 'string' then
-		rawset(self, k, v)
-		return
-	end
-	local isinstance = rawget(self, 'isclass') == nil
-	local setters = isinstance and self.__setters
-	local set = setters and setters[k]
-	if set then --r/w property
-		set(self, v)
-		return
-	end
-	local getters = isinstance and self.__getters
-	if getters and getters[k] then --read-only property
-		error(string.format('property "%s" is read/only', k))
-	end
-	if k:find'^get_' or k:find'^set_' then --install getter or setter
-		check_not_instance(self)
-		local name = k:sub(5)
-		local tname = k:find'^get_' and '__getters' or '__setters'
-		create_table(self, tname)[name] = v
-	elseif k:find'^before_' then --install before hook
-		local method_name = k:match'^before_(.*)'
-		self:before(method_name, v)
-	elseif k:find'^after_' then --install after hook
-		local method_name = k:match'^after_(.*)'
-		self:after(method_name, v)
-	elseif k:find'^override_' then --install override hook
-		local method_name = k:match'^override_(.*)'
-		self:override(method_name, v)
-	else
-		rawset(self, k, v)
-	end
-end
-
 local function install(self, combine, method_name, hook)
 	if method_name:find'^get_' then
-		check_not_instance(self)
 		local prop = method_name:sub(5)
 		local method = combine(self.__getters and self.__getters[prop], hook)
 		self[method_name] = method
 	elseif method_name:find'^set_' then
-		check_not_instance(self)
 		local prop = method_name:sub(5)
 		local method = combine(self.__setters and self.__setters[prop], hook)
 		self[method_name] = method
@@ -327,10 +342,15 @@ function Object:inherit(other, override, stop_super)
 	return self
 end
 
+function Object:optimize_property_lookup()
+	if self.__getters then create_table(self, '__getters') end
+	if self.__setters then create_table(self, '__setters') end
+end
+
 function Object:detach()
 	self:inherit()
 	self.classname = self.classname --store the classname
-	rawset(self, 'super', nil)
+	rawset(self, 'super', false)
 	return self
 end
 
