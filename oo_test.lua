@@ -28,7 +28,7 @@ function c1:after_init() print('c1 after_init') end
 function c2:before_init(...) print('c2 before_init',...); return ... end
 function c2:after_init() print('c2 after_init') end
 function c2:override_init(inherited, ...)
-	print('c2 overriden init', ...)
+	print('c2 overridden init', ...)
 	return inherited(self, ...)
 end
 assert(c2.init ~= c1.init)
